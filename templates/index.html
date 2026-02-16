@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Mexico Skies Command Center</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #output { background: #f4f4f4; padding: 10px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>New Mexico Skies Command Center</h1>
+    <button onclick="runTLEUpdater()">Run TLE Updater</button>
+    <button onclick="updateImage()">Update Image</button>
+    <button onclick="startObservationCycle()">Start Observation Cycle</button>
+    <button onclick="runAutomated2()">Run Automated2</button>
+    <button onclick="scheduleAutomation()">Schedule Automation</button>
+    <div id="output">
+        <h2>Standard Output:</h2>
+        <pre id="stdout"></pre>
+    </div>
+    <div id="error">
+        <h2>Error Output:</h2>
+        <pre id="stderr"></pre>
+    </div>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('connect', function() {
+            console.log('Websocket connected!');
+        });
+
+        socket.on('script_output', function(msg) {
+            var output = document.getElementById('output');
+            output.innerHTML += '<p>' + msg.data + '</p>';
+            output.scrollTop = output.scrollHeight; // Auto-scroll to the latest output
+        });
+
+        function runTLEUpdater() {
+            fetch('/run_tle_updater', { method: 'POST' });
+        }
+
+        function updateImage() {
+            fetch('/update_image', { method: 'GET' });
+        }
+
+        function startObservationCycle() {
+            fetch('/start_observation_cycle', { method: 'POST' });
+        }
+
+        function runAutomated2() {
+            fetch('/run_automated2', { method: 'POST' });
+        }
+
+        function scheduleAutomation() {
+            fetch('/schedule_automation', { method: 'POST' });
+        }
+        socket.on('script_output', function(msg) {
+            var stdout = document.getElementById('stdout');
+            stdout.textContent += msg.data;
+        });
+
+        socket.on('script_error', function(msg) {
+            var stderr = document.getElementById('stderr');
+            stderr.textContent += msg.data;
+        });
+    </script>
+</body>
+</html>

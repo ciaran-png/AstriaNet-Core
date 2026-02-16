@@ -1,0 +1,4 @@
+skyfield>=1.46
+numpy>=1.20
+requests>=2.25
+pytz>=2021.1
