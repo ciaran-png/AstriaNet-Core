@@ -32,11 +32,16 @@ def is_tleplan_current():
         return False
 
 def update_tleplan():
-    """Runs api_interaction.py to update the tleplan.txt file."""
+    """Runs schedule_generator to update the tleplan.txt file."""
     try:
-        logging.info("Running the TLE updater script.")
-        subprocess.run(['python', 'api_interaction.py', '--non-interactive', '--days', '1', '--observation-window', '2'], check=True)
-        logging.info("TLE Updater script finished successfully.")
+        logging.info("Running the schedule generator.")
+        subprocess.run([
+            'python', 'schedule_generator/schedule_generator.py',
+            '--non-interactive',
+            '--hours', '24',
+            '--observation-window', '2',
+        ], check=True)
+        logging.info("Schedule generator finished successfully.")
     except subprocess.CalledProcessError as e:
         logging.error(f"TLE Updater script encountered an error: {e}")
         return False

@@ -12,7 +12,11 @@ import re
 import time
 from datetime import datetime, timedelta
 
+import pytz
 import requests
+
+# Identifiable User-Agent per CelesTrak policy (Dr. Kelso recommends this)
+_USER_AGENT = "AstriaNet-ScheduleGenerator/1.0 (satellite-ops; contact@astrianet.org)"
 
 from config import (
     CACHE_CATALOG_FILE,
@@ -166,7 +170,10 @@ def fetch_tle_catalog(force_refresh=False):
     for group_name, url in CELESTRAK_URLS.items():
         logger.info("Fetching CelesTrak group: %s", group_name)
         try:
-            resp = requests.get(url, timeout=60)
+            resp = requests.get(
+                url, timeout=60,
+                headers={"User-Agent": _USER_AGENT},
+            )
             resp.raise_for_status()
             entries = parse_tle_text(resp.text)
             logger.info("  → %d TLEs from %s", len(entries), group_name)
@@ -184,7 +191,7 @@ def fetch_tle_catalog(force_refresh=False):
 def filter_catalog(raw_entries):
     # type: (list) -> list
     """Filter raw TLE entries to interesting LEO objects and enrich with metadata."""
-    now = datetime.utcnow()
+    now = datetime.now(pytz.utc).replace(tzinfo=None)
     catalog = []
 
     for name, line1, line2 in raw_entries:
@@ -280,19 +287,25 @@ def _read_cache():
 
 
 def load_or_fetch_catalog(force_refresh=False):
-    # type: (bool) -> list
-    """Return the satellite catalog, using cache when fresh."""
+    # type: (bool) -> tuple
+    """Return (catalog, total_fetched, total_filtered).
+
+    Uses cache when fresh.  When returning from cache, total_fetched is
+    set to -1 (unknown) to distinguish from a live fetch.
+    """
     if not force_refresh and _cache_is_fresh():
         logger.info("Using cached catalog (TTL OK)")
         try:
-            return _read_cache()
+            cached = _read_cache()
+            return cached, -1, len(cached)
         except Exception as e:
             logger.warning("Cache read failed, re-fetching: %s", e)
 
     raw = fetch_tle_catalog(force_refresh=force_refresh)
+    total_fetched = len(raw)
     catalog = filter_catalog(raw)
     _write_cache(catalog)
-    return catalog
+    return catalog, total_fetched, len(catalog)
 
 
 # ---------------------------------------------------------------------------

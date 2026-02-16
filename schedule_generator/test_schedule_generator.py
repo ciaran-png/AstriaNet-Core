@@ -111,7 +111,7 @@ class TestOutputFormat(unittest.TestCase):
 
     def _make_test_schedule(self):
         """Create a minimal test schedule."""
-        now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+        now_utc = datetime.now(pytz.utc)
         return [
             {
                 "norad_id": 25544,
@@ -355,7 +355,7 @@ class TestMultiSiteDetection(unittest.TestCase):
     """Tests for multi-site opportunity detection."""
 
     def test_overlapping_passes_detected(self):
-        now = datetime.utcnow().replace(tzinfo=pytz.utc)
+        now = datetime.now(pytz.utc)
         passes = {
             "site_a": [{
                 "norad_id": 25544, "name": "ISS",
@@ -377,7 +377,7 @@ class TestMultiSiteDetection(unittest.TestCase):
         self.assertEqual(len(opps[25544]["sites"]), 2)
 
     def test_sequential_passes_detected(self):
-        now = datetime.utcnow().replace(tzinfo=pytz.utc)
+        now = datetime.now(pytz.utc)
         passes = {
             "site_a": [{
                 "norad_id": 25544, "name": "ISS",

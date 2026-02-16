@@ -161,7 +161,7 @@ def main(argv=None):
 
     output_dir = args.output_dir or os.getcwd()
 
-    now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+    now_utc = datetime.now(pytz.utc)
     t_start = now_utc
     t_end = now_utc + timedelta(hours=args.hours)
 
@@ -178,13 +178,12 @@ def main(argv=None):
     # Step 1: Build satellite catalog
     # ------------------------------------------------------------------
     logger.info("Step 1/5: Building satellite catalog …")
-    catalog = load_or_fetch_catalog(force_refresh=args.refresh_catalog)
-    catalog_filtered = len(catalog)
-
-    # We approximate total fetched as filtered * 1.5 (can't know without re-fetching).
-    # If we force-refreshed we have exact numbers via logging, but the summary
-    # needs a count.  We'll record a rough estimate.
-    catalog_total_approx = int(catalog_filtered * 2.5)
+    catalog, catalog_total_fetched, catalog_filtered = load_or_fetch_catalog(
+        force_refresh=args.refresh_catalog,
+    )
+    # When loaded from cache, total_fetched is -1 (unknown); use filtered count
+    if catalog_total_fetched < 0:
+        catalog_total_fetched = catalog_filtered
 
     tier_counts = {}
     for sat in catalog:
@@ -244,7 +243,7 @@ def main(argv=None):
 
     write_schedule_summary(
         all_schedules,
-        catalog_total_approx,
+        catalog_total_fetched,
         catalog_filtered,
         opportunities,
         args.hours,
